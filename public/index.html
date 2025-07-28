@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sticky Tomatoes - Combo Generator</title>
+    <title>TastePal - Your Personal Meal Companion</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Add Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🍅 Sticky Tomatoes</h1>
-            <p>Restaurant Combo Generator</p>
+            <h1>🍽️ TastePal</h1>
+            <p>Your Personal Meal Companion</p>
         </header>
 
         <div class="controls">
@@ -30,15 +34,14 @@
             <div class="buttons">
                 <button id="generateSingleDay">Generate Single Day</button>
                 <button id="generateThreeDays">Generate 3 Days</button>
-                <button id="generateSevenDays">Generate 7 Days Menu</button>
-            <button id="refreshButton">🔄 Refresh</button>
-</div>
-
+                <button id="generateSevenDays">Generate 7-Day Plan</button>
+                <button id="refreshButton">🔄 Refresh</button>
+            </div>
         </div>
 
         <div id="loading" class="loading hidden">
             <div class="spinner"></div>
-            <p>Generating combos...</p>
+            <p>TastePal is crafting your perfect meals...</p>
         </div>
 
         <div id="results" class="results"></div>

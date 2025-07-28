@@ -67,7 +67,7 @@ app.get('/api/master-menu', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🍅 Sticky Tomatoes server running on http://localhost:${PORT}`);
+  console.log(`🍽️ TastePal server running on http://localhost:${PORT}`);
   console.log(`📱 API endpoints:`);
   console.log(`   GET /api/combos/:day - Get single day meal (JSON format)`);
   console.log(`   GET /api/three-day-menu/:startDay - Get three-day menu (JSON format)`);
