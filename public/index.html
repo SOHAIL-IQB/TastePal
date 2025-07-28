@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sticky Tomatoes - Combo Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍅 Sticky Tomatoes</h1>
+            <p>Restaurant Combo Generator</p>
+        </header>
+
+        <div class="controls">
+            <div class="day-selector">
+                <label for="daySelect">Select Day:</label>
+                <select id="daySelect">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                </select>
+            </div>
+            
+            <div class="buttons">
+                <button id="generateSingleDay">Generate Single Day</button>
+                <button id="generateThreeDays">Generate 3 Days</button>
+                <button id="generateSevenDays">Generate 7 Days Menu</button>
+            <button id="refreshButton">🔄 Refresh</button>
+</div>
+
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Generating combos...</p>
+        </div>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
