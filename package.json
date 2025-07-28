@@ -1,5 +1,5 @@
 {
-  "name": "TastePal",
+  "name": "tastepal",
   "version": "1.0.0",
   "description": "Restaurant combo generator with calorie and taste profile management",
   "main": "server.js",

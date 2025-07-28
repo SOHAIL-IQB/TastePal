@@ -86,6 +86,32 @@ class ComboGenerator {
     return `Perfect ${day} meal with ${tasteProfile} profile matching ${dayProfileText} preferences, ${calorieRange} maintained, ${popularityText} for satisfaction`;
   }
 
+  // NEW: Check if items were used in recent days (sliding window)
+  isValidComboWithHistory(combo, existingCombos, currentDayIndex) {
+    const calories = this.calculateComboCalories(combo);
+    
+    // Check calorie range (550-800)
+    if (calories < 550 || calories > 800) return false;
+    
+    // Check against recent days (sliding window of 3 days)
+    const windowSize = 3;
+    const startIndex = Math.max(0, currentDayIndex - windowSize + 1);
+    
+    for (let i = startIndex; i < currentDayIndex; i++) {
+      if (existingCombos[i]) {
+        const existingCombo = existingCombos[i];
+        // Check if any item repeats in the window
+        if (existingCombo.main === combo.main.name ||
+            existingCombo.side === combo.side.name ||
+            existingCombo.drink === combo.drink.name) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+
   isValidCombo(combo, usedItems) {
     const calories = this.calculateComboCalories(combo);
     
@@ -153,7 +179,7 @@ class ComboGenerator {
     ];
     
     const threeDayMenu = [];
-    const globalUsedItems = new Set();
+    const globalUsedItems = new Set(); // No repetition within 3 days
     
     threeDays.forEach((day, dayIndex) => {
       const dailyMenu = this.createRandomMenu(day);
@@ -200,140 +226,112 @@ class ComboGenerator {
     return threeDayMenu;
   }
 
-  // FIXED Generate seven day menu in JSON format
+  // FIXED: Generate seven day menu with sliding window approach
   generateSevenDayMenu() {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const sevenDayMenu = [];
     
-    // Strategy: Instead of strict global tracking, use a more flexible approach
-    const usedCombinations = new Set(); // Track actual combinations instead of individual items
     let globalAttempts = 0;
     const maxGlobalAttempts = 5000;
     
-    while (sevenDayMenu.length < 7 && globalAttempts < maxGlobalAttempts) {
-      globalAttempts++;
-      
-      // Try to generate all 7 days
-      const tempMenu = [];
-      const tempUsedItems = new Set();
-      let success = true;
-      
-      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-        const day = days[dayIndex];
-        const dailyMenu = this.createRandomMenu(day);
-        let combo = null;
-        let attempts = 0;
-        const maxAttempts = 500;
-        
-        while (!combo && attempts < maxAttempts) {
-          attempts++;
-          
-          const main = dailyMenu.mainCourse[Math.floor(Math.random() * dailyMenu.mainCourse.length)];
-          const side = dailyMenu.sideDishes[Math.floor(Math.random() * dailyMenu.sideDishes.length)];
-          const drink = dailyMenu.drinks[Math.floor(Math.random() * dailyMenu.drinks.length)];
-          
-          const testCombo = { main, side, drink };
-          const comboKey = `${main.id}-${side.id}-${drink.id}`;
-          
-          // For 7 days, be less strict about item repetition but avoid exact combo repetition
-          const calories = this.calculateComboCalories(testCombo);
-          if (calories >= 550 && calories <= 800 && !usedCombinations.has(comboKey)) {
-            const totalCalories = this.calculateComboCalories(testCombo);
-            const popularityScore = this.calculateComboPopularity(testCombo);
-            const tasteProfile = this.determineTasteProfile(testCombo);
-            
-            combo = {
-              combo_id: dayIndex + 1,
-              day: day,
-              main: main.name,
-              side: side.name,
-              drink: drink.name,
-              total_calories: totalCalories,
-              popularity_score: popularityScore,
-              reasoning: this.generateReasoningText(testCombo, day, tasteProfile)
-            };
-            
-            usedCombinations.add(comboKey);
-            break;
-          }
-        }
-        
-        if (combo) {
-          tempMenu.push(combo);
-        } else {
-          success = false;
-          break;
-        }
-      }
-      
-      // If we successfully generated all 7 days, use this menu
-      if (success && tempMenu.length === 7) {
-        return tempMenu;
-      }
-      
-      // If we have some progress, keep the best attempt
-      if (tempMenu.length > sevenDayMenu.length) {
-        sevenDayMenu.length = 0; // Clear array
-        sevenDayMenu.push(...tempMenu);
-      }
-    }
-    
-    // If we still don't have 7, fill the remaining with relaxed constraints
-    while (sevenDayMenu.length < 7) {
-      const dayIndex = sevenDayMenu.length;
+    // Generate day by day with sliding window check
+    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       const day = days[dayIndex];
       const dailyMenu = this.createRandomMenu(day);
+      let combo = null;
+      let attempts = 0;
+      const maxAttempts = 1000;
       
-      // Just pick any valid calorie combination for remaining days
-      const main = dailyMenu.mainCourse[0];
-      const side = dailyMenu.sideDishes[0];
-      const drink = dailyMenu.drinks[0];
-      
-      const testCombo = { main, side, drink };
-      const totalCalories = this.calculateComboCalories(testCombo);
-      
-      if (totalCalories >= 550 && totalCalories <= 800) {
-        const popularityScore = this.calculateComboPopularity(testCombo);
-        const tasteProfile = this.determineTasteProfile(testCombo);
+      while (!combo && attempts < maxAttempts && globalAttempts < maxGlobalAttempts) {
+        attempts++;
+        globalAttempts++;
         
-        const combo = {
-          combo_id: dayIndex + 1,
-          day: day,
-          main: main.name,
-          side: side.name,
-          drink: drink.name,
-          total_calories: totalCalories,
-          popularity_score: popularityScore,
-          reasoning: this.generateReasoningText(testCombo, day, tasteProfile)
-        };
+        const main = dailyMenu.mainCourse[Math.floor(Math.random() * dailyMenu.mainCourse.length)];
+        const side = dailyMenu.sideDishes[Math.floor(Math.random() * dailyMenu.sideDishes.length)];
+        const drink = dailyMenu.drinks[Math.floor(Math.random() * dailyMenu.drinks.length)];
         
-        sevenDayMenu.push(combo);
-      } else {
-        // Fallback: use any items that meet calorie requirements
+        const testCombo = { main, side, drink };
+        
+        // Use sliding window validation for days after day 0
+        const isValid = dayIndex === 0 ? 
+          this.isValidCombo(testCombo, new Set()) : 
+          this.isValidComboWithHistory(testCombo, sevenDayMenu, dayIndex);
+        
+        if (isValid) {
+          const totalCalories = this.calculateComboCalories(testCombo);
+          const popularityScore = this.calculateComboPopularity(testCombo);
+          const tasteProfile = this.determineTasteProfile(testCombo);
+          
+          combo = {
+            combo_id: dayIndex + 1,
+            day: day,
+            main: main.name,
+            side: side.name,
+            drink: drink.name,
+            total_calories: totalCalories,
+            popularity_score: popularityScore,
+            reasoning: this.generateReasoningText(testCombo, day, tasteProfile)
+          };
+        }
+      }
+      
+      // Fallback with more relaxed constraints if needed
+      if (!combo) {
+        let fallbackCombo = null;
         const allMains = masterMenu.mainCourse;
         const allSides = masterMenu.sideDishes;
         const allDrinks = masterMenu.drinks;
         
-        const main = allMains[Math.floor(Math.random() * allMains.length)];
-        const side = allSides[Math.floor(Math.random() * allSides.length)];
-        const drink = allDrinks[Math.floor(Math.random() * allDrinks.length)];
+        // Try to find any valid calorie combination that doesn't repeat in last 2 days
+        for (let retryAttempts = 0; retryAttempts < 100; retryAttempts++) {
+          const main = allMains[Math.floor(Math.random() * allMains.length)];
+          const side = allSides[Math.floor(Math.random() * allSides.length)];
+          const drink = allDrinks[Math.floor(Math.random() * allDrinks.length)];
+          
+          const testCombo = { main, side, drink };
+          const calories = this.calculateComboCalories(testCombo);
+          
+          if (calories >= 550 && calories <= 800) {
+            // Check only last 2 days for fallback
+            let isValidFallback = true;
+            const checkDays = Math.min(2, dayIndex);
+            
+            for (let i = dayIndex - checkDays; i < dayIndex; i++) {
+              if (sevenDayMenu[i]) {
+                const existingCombo = sevenDayMenu[i];
+                if (existingCombo.main === main.name ||
+                    existingCombo.side === side.name ||
+                    existingCombo.drink === drink.name) {
+                  isValidFallback = false;
+                  break;
+                }
+              }
+            }
+            
+            if (isValidFallback) {
+              const totalCalories = this.calculateComboCalories(testCombo);
+              const popularityScore = this.calculateComboPopularity(testCombo);
+              const tasteProfile = this.determineTasteProfile(testCombo);
+              
+              fallbackCombo = {
+                combo_id: dayIndex + 1,
+                day: day,
+                main: main.name,
+                side: side.name,
+                drink: drink.name,
+                total_calories: totalCalories,
+                popularity_score: popularityScore,
+                reasoning: this.generateReasoningText(testCombo, day, tasteProfile)
+              };
+              break;
+            }
+          }
+        }
         
-        const fallbackCombo = { main, side, drink };
-        const totalCalories = this.calculateComboCalories(fallbackCombo);
-        const popularityScore = this.calculateComboPopularity(fallbackCombo);
-        const tasteProfile = this.determineTasteProfile(fallbackCombo);
-        
-        const combo = {
-          combo_id: dayIndex + 1,
-          day: day,
-          main: main.name,
-          side: side.name,
-          drink: drink.name,
-          total_calories: totalCalories,
-          popularity_score: popularityScore,
-          reasoning: this.generateReasoningText(fallbackCombo, day, tasteProfile)
-        };
-        
+        combo = fallbackCombo;
+      }
+      
+      if (combo) {
         sevenDayMenu.push(combo);
       }
     }
